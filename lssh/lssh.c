@@ -5,6 +5,10 @@
 #include <sys/wait.h>
 #include <errno.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #define PROMPT "lambda-shell$ "
 
 #define MAX_TOKENS 100
@@ -125,9 +129,34 @@ int main(void)
             fprintf(stderr, "Fork failed, exiting program.\n");
             exit(1);
         } else if (rc == 0) {
+            int redirect = 0;
+            int redirect_index = 0;
+            FILE *fd;
+            for (int i = 0; i < args_count; i++) {
+                if (strcmp(args[i], ">") == 0) {
+                    redirect = 1;
+                    redirect_index = i;
+                    printf("redirect: %d\n", redirect);
+                }
+            }
+            if (redirect) {
+                printf("passed the redirect test: %d\n", redirect);
+                if (redirect_index == 0) {
+                    printf("'>' usage: > (redirect output) must follow at least one other argument.\n");
+                } else {
+                    printf("*** Found a usable >\n");
+                    char *output = strdup(args[redirect_index + 1]);
+                    printf("*** Redirect output to %s\n", output);
+                    args[redirect_index] = NULL;
+                    fd = open(output, "w");
+                    dup2(fd, 1);
+                }
+                redirect = 0;
+                redirect_index = 0;
+            }
+
             execvp(args[0], args);
         } else {
-            // int wc = waitpid(rc, NULL, 0);
             waitpid(rc, NULL, 0);
         };        
     }
