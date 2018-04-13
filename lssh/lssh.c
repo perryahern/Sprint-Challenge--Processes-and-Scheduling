@@ -127,28 +127,24 @@ int main(void)
 
         if (rc < 0) {
             fprintf(stderr, "Fork failed, exiting program.\n");
-            exit(1);
+            continue;
         } else if (rc == 0) {
             int redirect = 0;
             int redirect_index = 0;
-            FILE *fd;
+            int fd;
             for (int i = 0; i < args_count; i++) {
                 if (strcmp(args[i], ">") == 0) {
                     redirect = 1;
                     redirect_index = i;
-                    printf("redirect: %d\n", redirect);
                 }
             }
             if (redirect) {
-                printf("passed the redirect test: %d\n", redirect);
                 if (redirect_index == 0) {
                     printf("'>' usage: > (redirect output) must follow at least one other argument.\n");
                 } else {
-                    printf("*** Found a usable >\n");
                     char *output = strdup(args[redirect_index + 1]);
-                    printf("*** Redirect output to %s\n", output);
                     args[redirect_index] = NULL;
-                    fd = open(output, "w");
+                    fd = open(output, O_WRONLY|O_CREAT);
                     dup2(fd, 1);
                 }
                 redirect = 0;
