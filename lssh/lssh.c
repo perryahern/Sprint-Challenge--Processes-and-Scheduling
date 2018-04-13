@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <errno.h>
 
 #define PROMPT "lambda-shell$ "
 
@@ -102,6 +103,22 @@ int main(void)
         #endif
         
         /* Add your code for implementing the shell's logic here */
+
+        // cd command needs priority handling, check for and handle it first
+        if (strcmp(args[0], "cd") == 0) {
+            if (args_count != 2) {
+                printf("'cd' usage: cd dirname -or- cd path/dirname\n");
+                // continue;
+            } else {
+                int status = chdir(args[1]);
+                if (status == -1) {
+                    perror("chdir");
+                }
+            }
+            continue;
+        }
+        
+        // command wasn't cd, proceed with normal forking and execution of command
         int rc = fork();
 
         if (rc < 0) {
